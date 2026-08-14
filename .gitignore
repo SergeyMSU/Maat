@@ -1,0 +1,12 @@
+
+Maat/.vs/Maat/v17/
+
+Data (results)/
+
+*.vsidx
+
+*.sln
+
+*.vcxproj
+
+*.user
