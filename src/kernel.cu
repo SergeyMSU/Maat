@@ -4720,9 +4720,9 @@ cudaError_t addWithCuda()
 {
     cudaError_t cudaStatus;
 
-    //Konstruktor K(32, 32, 32,  -3000.0 * AU, 3000.0 * AU, -3000.0 * AU, 3000.0 * AU, -3000.0 * AU, 3000.0 * AU);   // !!!!!!!!!!!!!!!!!!!!!!!
+    Konstruktor K(32, 32, 16,  -3000.0 * AU, 3000.0 * AU, -3000.0 * AU, 3000.0 * AU, 0.0 * AU, 3000.0 * AU);   // !!!!!!!!!!!!!!!!!!!!!!!
 
-    /*cout << "(1) All size = " << K.all_Kyb.size() << endl;
+    cout << "(1) All size = " << K.all_Kyb.size() << endl;
     K.Drobim(-1800.0 * AU, 1200.0 * AU, -1800.0 * AU, 1800.0 * AU, -1800.0 * AU, 1800.0 * AU, 2);
     cout << "(2) All size = " << K.all_Kyb.size() << endl;
     K.Drobim(-900.0 * AU, 700.0 * AU, -1200.0 * AU, 1200.0 * AU, -1200.0 * AU, 1200.0 * AU, 2);
@@ -4734,11 +4734,11 @@ cudaError_t addWithCuda()
     K.Drobim(0.0, 0.0, 0.0, 30.0 * AU, 160.0 * AU, 2, false);
     cout << "(6) All size = " << K.all_Kyb.size() << endl;
     K.Drobim(0.0, 0.0, 0.0, 20.0 * AU, 100.0 * AU, 2, false);
-    cout << "All size = " << K.all_Kyb.size() << endl;*/
+    cout << "All size = " << K.all_Kyb.size() << endl;
 
 
 
-     Konstruktor K("binary_ISSI_Instabiliti_1.dat", true);
+     //Konstruktor K("binary_ISSI_Instabiliti_1.dat", true);
 
     //Konstruktor K("binary_Golikov_Setka_file_inst_N_16_2024.dat", true);
     //Konstruktor K("Golikov_Setka_file_inst_16_MA_4.txt.txt", false);
@@ -4830,7 +4830,7 @@ cudaError_t addWithCuda()
 
     //K.get_inner();   // Попытка считать граничные условия из 2Д задачи
 
-    //K.filling();
+    K.filling();
     //K.filling_mini();
 
 
@@ -5602,7 +5602,7 @@ cudaError_t addWithCuda()
     istoch = true;
 
     // 15000 * 50 - час
-    for (int i = 0; i < 15000 * 50 * 5; i = i + 2)  // Сколько шагов по времени делаем?
+    for (int i = 0; i < 15000 * 25 * 1; i = i + 2)  // Сколько шагов по времени делаем?
     {
         if (i % 50000 == 0)
         {
@@ -5645,7 +5645,7 @@ cudaError_t addWithCuda()
             goto Error;
         }
 
-        if ((i % 30000 == 0))
+        if ((i % 3000000000 == 0))
         {
             cout << "HLLC + D " + nam << endl;
             if (true)

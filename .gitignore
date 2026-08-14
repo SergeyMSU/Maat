@@ -10,3 +10,15 @@ Data (results)/
 *.vcxproj
 
 *.user
+
+*.db
+
+Maat/.vs/Maat.slnx/v18/.suo
+
+*.json
+
+*.ipch
+
+*.slnx
+
+*.filters

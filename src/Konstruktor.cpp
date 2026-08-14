@@ -1133,7 +1133,8 @@ void Konstruktor::dekard_skorost(double x, double y, double z, double Vr, double
 
 void Konstruktor::filling(void)
 {
-	double r_inner = 30.0 * AU; // На каком расстоянии задана граничные условия
+	double r_inner = 30.0 * AU; // На каком расстоянии заданы граничные условия
+	double r_au = 1.0 * AU; // На каком расстоянии заданы граничные условия
 	double V_E = 417.07E5;
 	double ro_E = 1.46187E-26;
 	double P_E = 2.62162E-13;   // Мах другой в давлении
@@ -1162,10 +1163,10 @@ void Konstruktor::filling(void)
 			i->u = V_E * i->x / dist;
 			i->v = V_E * i->y / dist;
 			i->w = V_E * i->z / dist;
-			double BE = B_E / (dist / r_inner);
+			double BE = B_E / (dist / r_au);
 			double the = acos(i->z / dist);
 			double AA, BB, CC;
-			double BR = -B_E * kv((r_inner / dist));    // Br
+			double BR = -B_E * kv((r_au / dist));    // Br
 			this->dekard_skorost(i->x, i->y, i->z, BR, BE * sin(the), 0.0, AA, BB, CC);
 			i->Bx = AA;
 			i->By = BB;
@@ -1697,7 +1698,7 @@ void Konstruktor::print_Tecplot_y_20(double y, double T, string nam, const doubl
 	ofstream fout;
 	string name_f = "sd_y_" + to_string(y) + "__" + to_string(T) + "_" + nam + ".txt";
 	fout.open(name_f);
-	fout << "TITLE = \"HP\"  VARIABLES = \"X\", \"Z\", \"r\", \"Ro\", \"P\", \"P_all\", \"Vx\", \"Vy\", \"Vz\", \"VV\",  \"Bx\", \"By\", \"Bz\", \"BB\", \"Max\", \"Alf\",\"Q\", \"jjj\", \"jx\", \"jy\",\"jz\",\"Fmagx\",\"Fmagy\",\"Fmagz\", \"-dpx\",\"-dpy\",\"-dpz\", \"-dbbx\",\"-dbby\",\"-dbbz\", \"Ftenx\",\"Fteny\",\"Ftenz\", ZONE T = \"HP\", SOLUTIONTIME = "<< Time << endl;
+	fout << "TITLE = \"HP\"  VARIABLES = \"X\", \"Z\", \"r\", \"Ro\", \"P\", \"P_all\", \"Vx\", \"Vy\", \"Vz\", \"VV\",  \"Bx\", \"By\", \"Bz\", \"BB\", \"Max\", \"Alf\",\"Q\", ZONE T = \"HP\", SOLUTIONTIME = "<< Time << endl;
 	
 	double mp = 1.67262192369E-24;
 	
@@ -1708,11 +1709,11 @@ void Konstruktor::print_Tecplot_y_20(double y, double T, string nam, const doubl
 			double Max = 0.0;
 			double Alf = 10000.0;
 			double QQ = 0.0;
-			if (i->ro > 0.00000001)
+			if (i->ro > 1E-50)
 			{
 				QQ = i->Q / i->ro;
 				Max = sqrt(kvv(i->u, i->v, i->w) / (ggg * i->p / i->ro));
-				if (kvv(i->Bx, i->By, i->Bz) > 0.00001)
+				if (kvv(i->Bx, i->By, i->Bz) > 1E-50)
 				{
 					Alf = sqrt(kvv(i->u, i->v, i->w) / (kvv(i->Bx, i->By, i->Bz) / (cpi4 * i->ro)));
 				}
@@ -1720,14 +1721,17 @@ void Konstruktor::print_Tecplot_y_20(double y, double T, string nam, const doubl
 
 			fout << i->x / AU << " " << i->z / AU << " " << sqrt(i->x * i->x + i->z * i->z) / AU << " " << i->ro / mp << " " << i->p << " " //
 				<< i->p + kvv(i->Bx, i->By, i->Bz) / cpi8 << " " << //
-				i->u / 1.0E5 << " " << i->v / 1.0E5 << " " << i->w / 1.0E5 << " " << sqrt(kvv(i->u, i->v, i->w)) << //
-				" " << i->Bx / 1.0E-6 << " " << i->By / 1.0E-6 << " " << i->Bz / 1.0E-6 << " " << sqrt(kvv(i->Bx, i->By, i->Bz)) / kv(1.0E-6) << " " << Max << " " << Alf << " " << QQ << " " << sqrt(kv(i->jx) + kv(i->jy) + kv(i->jz)) << " " << i->jx << " " << i->jy << " " << i->jz << " " <<
-				(i->jy * i->Bz - i->jz * i->By)/(4.0 * pi) << " " << (i->jx * i->Bz - i->jz * i->Bx) / (4.0 * pi) << " " << (i->jx * i->By - i->jy * i->Bx) / (4.0 * pi) << 
-				" " << -i->dpx << " " << -i->dpy << " " << -i->dpz << 
-			" " << -i->dbbx / (8.0 * pi) << " " << -i->dbby / (8.0 * pi) << " " << -i->dbbz / (8.0 * pi) << 
-			" " << (i->jy * i->Bz - i->jz * i->By) / (4.0 * pi) + i->dbbx / (8.0 * pi) << 
-				" " << (i->jx * i->Bz - i->jz * i->Bx) / (4.0 * pi) + i->dbby / (8.0 * pi) <<
-				" " << (i->jx * i->By - i->jy * i->Bx) / (4.0 * pi) + i->dbbz / (8.0 * pi) << " " << endl;
+				i->u / 1.0E5 << " " << i->v / 1.0E5 << " " << i->w / 1.0E5 << " " << sqrt(kvv(i->u, i->v, i->w)) / 1.0E5 << //
+				" " << i->Bx / 1.0E-6 << " " << i->By / 1.0E-6 << " " << i->Bz / 1.0E-6 << " " << sqrt(kvv(i->Bx, i->By, i->Bz)) / kv(1.0E-6) << " " 
+				<< Max << " " << Alf << " " << QQ << endl;
+
+			// Симметричные значения
+
+			fout << i->x / AU << " " << -i->z / AU << " " << sqrt(i->x * i->x + i->z * i->z) / AU << " " << i->ro / mp << " " << i->p << " " //
+				<< i->p + kvv(i->Bx, i->By, i->Bz) / cpi8 << " " << //
+				i->u / 1.0E5 << " " << i->v / 1.0E5 << " " << -i->w / 1.0E5 << " " << sqrt(kvv(i->u, i->v, i->w)) / 1.0E5 << //
+				" " << i->Bx / 1.0E-6 << " " << i->By / 1.0E-6 << " " << i->Bz / 1.0E-6 << " " << sqrt(kvv(i->Bx, i->By, i->Bz)) / kv(1.0E-6) << " "
+				<< Max << " " << Alf << " " << QQ << endl;
 
 			//fout << i->x * r_o << " " << -i->z * r_o << " " << sqrt(i->x * r_o * i->x * r_o + i->z * r_o * i->z * r_o) << " " << i->ro << " " << i->p << " " //
 			//	<< i->p + kvv(i->Bx, i->By, i->Bz) / cpi8 << " " << //
