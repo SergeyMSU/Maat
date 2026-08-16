@@ -1727,11 +1727,11 @@ void Konstruktor::print_Tecplot_y_20(double y, double T, string nam, const doubl
 
 			// Симметричные значения
 
-			fout << i->x / AU << " " << -i->z / AU << " " << sqrt(i->x * i->x + i->z * i->z) / AU << " " << i->ro / mp << " " << i->p << " " //
-				<< i->p + kvv(i->Bx, i->By, i->Bz) / cpi8 << " " << //
-				i->u / 1.0E5 << " " << i->v / 1.0E5 << " " << -i->w / 1.0E5 << " " << sqrt(kvv(i->u, i->v, i->w)) / 1.0E5 << //
-				" " << i->Bx / 1.0E-6 << " " << i->By / 1.0E-6 << " " << i->Bz / 1.0E-6 << " " << sqrt(kvv(i->Bx, i->By, i->Bz)) / kv(1.0E-6) << " "
-				<< Max << " " << Alf << " " << QQ << endl;
+			//fout << i->x / AU << " " << -i->z / AU << " " << sqrt(i->x * i->x + i->z * i->z) / AU << " " << i->ro / mp << " " << i->p << " " //
+			//	<< i->p + kvv(i->Bx, i->By, i->Bz) / cpi8 << " " << //
+			//	i->u / 1.0E5 << " " << i->v / 1.0E5 << " " << -i->w / 1.0E5 << " " << sqrt(kvv(i->u, i->v, i->w)) / 1.0E5 << //
+			//	" " << i->Bx / 1.0E-6 << " " << i->By / 1.0E-6 << " " << i->Bz / 1.0E-6 << " " << sqrt(kvv(i->Bx, i->By, i->Bz)) / kv(1.0E-6) << " "
+			//	<< Max << " " << Alf << " " << QQ << endl;
 
 			//fout << i->x * r_o << " " << -i->z * r_o << " " << sqrt(i->x * r_o * i->x * r_o + i->z * r_o * i->z * r_o) << " " << i->ro << " " << i->p << " " //
 			//	<< i->p + kvv(i->Bx, i->By, i->Bz) / cpi8 << " " << //
