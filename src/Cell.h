@@ -22,7 +22,7 @@
 
 
 #define AU 14959787000000.0 
-#define rr_0 (40.0 * AU) 
+#define rr_0 (45.0 * AU) 
 
 
 #define ddist rr_0//0.3//25   // 0.7
