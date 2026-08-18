@@ -6,47 +6,48 @@
 #include <fstream>
 #include <math.h>
 
-#define M_inf  0.0// 3.0 // 0.25 // 0.7 // 0.4 // 0.8
-#define M_infty  -M_inf
-#define phi_0  31.341 // 31.0 // 17.0 // 4.878 //1.627
+#define ae1  0.00280389          // 1 АЕ в безразмерным параметрах
+#define phi_0  31.1486           // число Хи
+#define rr_0  (40.0 * ae1)       // С какого расстояния начинаем считать (в безразмерном виде)
+#define ddist rr_0
+#define M_0  5.80029             // Число Маха на 1 АЕ
+#define M_alf  8.31052           // Число Альфвеновского Маха на 1 АЕ
+#define ga (5.0/3.0)             // Показатель адиабаты
+#define M_inf  1.9642            // Газодинамический Мах на бесконечности
+#define M_infty  -M_inf          // Газодинамический Мах на бесконечности со знаком скорости
+#define B_inf  10.3731           // Магнитное поле на бесконечности (можно было выразить через альфвеновских мах на бесконечности)
+#define ddist2 (55.0 * ae1)      // До какого радиуса сносим в сферической ск?
+#define a_2 0.135236  // 0.102578  // 0.10263
+#define Kn_  0.506547 // 0.4326569808 // 0.4326569808 // 0.4326569808 // 6.0	
+
+
 #define alpha  45.0
-#define M_alf  3.06824 // 12.0
+
 #define epsilon_ (1.0/M_alf)
 #define step  70000
 #define omega 0.0 //6 //1600
-#define M_0  10.0
+
 
 #define kk_ 196.0
 #define betta 0.0 //4.2426
 #define chi phi_0
 
 
-#define AU 14959787000000.0 
-#define rr_0 (45.0 * AU) 
-
-
 #define ddist rr_0//0.3//25   // 0.7
-#define ddist2 (60.0 * AU)  //0.6 //55   // До какого радиуса сносим в сферической ск?
+
 
 #define kurant  0.9 // 0.9  Актуальный курант в файле header
 
-#define a_2 0.1307345665  // 0.102578  // 0.10263
-#define Kn_  0.44 // 0.4326569808 // 0.4326569808 // 0.4326569808 // 6.0			
+		
 //#define Kn_  0.2	                                            // Число Кнудсена
 //#define a_2 0.102578  // 0.10263
-#define n_p_LISM_ (1.5) 
+#define n_p_LISM_ (3.0) 
 #define n_H_LISM_ (1.0)
 #define sigma(x) (kv(1.0 - a_2 * log(x)))               // Дифференциальное сечение перезарядки
 
-//#define Max_E  6.0
-//#define M_A  12.87
-//#define M_infty  1.97
-//#define kappa_  5.3743
-//#define rr_0  0.00208527 // 0.00329761
-//#define mu 0.2837
 
-#define ga (5.0/3.0)          // Показатель адиабаты
-#define ggg (5.0/3.0)
+
+#define ggg ga
 #define kv(x) ( (x)*(x) )
 #define kvv(x,y,z)  (kv(x) + kv(y) + kv(z))
 
