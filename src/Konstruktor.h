@@ -99,7 +99,7 @@ public:
 	void Delenie(double x1, double x2, double y1, double y2, double z1, double z2);
 	void konect(double R);
 
-	void Generate_sosed_for_TVD(int* s1, int* s2);
+	void Generate_sosed_for_TVD(int* s1, int* s2, int* s12, int* s13, int* s14, int* s22, int* s23, int* s24);
 
 	void find_sosed(Kyb* A);
 
