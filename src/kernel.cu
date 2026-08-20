@@ -1468,7 +1468,7 @@ __global__ void funk_time(double* T, double* T_do, double* TT, int* i)
     *TT = *TT + *T_do;
     *T = 10000000;
     *i = *i + 1;
-    if (*i % 3000 == 0)
+    if (*i % 100 == 0)
     {
         printf("i = %d,  TT = %lf years,  dT = %lf hours \n", *i, *TT/0.00791429, *T_do / 9.03458E-7);
     }
@@ -5382,6 +5382,10 @@ cudaError_t addWithCuda()
     //K.Drobim(0.0, 0.0, 0.0, 20.0 * ae1, 100.0 * ae1, 2, false);
     //cout << "All size = " << K.all_Kyb.size() << endl;
 
+
+    // Добавляем два мельчения: -450  230      370
+    // Добавляем два мельчения: -350  200      330
+
     //Konstruktor K(100, 100, 160,   -3.06553, 3.06553, -3.06553, 3.06553,   0.0, 4.9048102);   // !!!!!!!!!!!!!!!!!!!!!!!
     //Konstruktor K("binary_Moscow_Boston_3-HLLD_TVD_2025.dat", true);
 
@@ -5389,13 +5393,21 @@ cudaError_t addWithCuda()
     //Konstruktor K("Golikov_Setka_file_inst_16_MA_4.txt.txt", false);
     //Konstruktor K("binary_Golikov_Setka_file_moscow_31_2024_vremenniy.dat", true);
 
+    cout << "(1) All size = " << K.all_Kyb.size() << endl;
+    K.Drobim(-500.0 * ae1, 450.0 * ae1, -500.0 * ae1, 500.0 * ae1, -500.0 * ae1, 500.0 * ae1, 2);
+    cout << "(2) All size = " << K.all_Kyb.size() << endl;
+    K.Drobim(-280.0 * ae1, 230.0 * ae1, -280.0 * ae1, 280.0 * ae1, -280.0 * ae1, 280.0 * ae1, 2);
+    cout << "(3) All size = " << K.all_Kyb.size() << endl;
+
+
     // "Maat-Laks-1"
     // "Maat-HLL-1"
     // "Maat-HLLC-atoms-1"
     // "Maat-HLLC-TVD-atoms-1"    "Maat-HLLC-TVD-atoms-1.2" - улучшил ТВД на стыках
+    // "Maat-HLLC-TVD-atoms-2"   добавил ячеек два набора
 
 
-    string nam = "Maat-HLLC-TVD-atoms-1.2";  // Имя для вывода файлов
+    string nam = "Maat-HLLC-TVD-atoms-2";  // Имя для вывода файлов
     //string nam = "inst_N_16_MA_4_2025";  // Имя для вывода файлов
     //string nam = "inst_N_31movi_2024";  // Имя для вывода файлов
 
@@ -6550,7 +6562,7 @@ cudaError_t addWithCuda()
 
 
     // 65000 - 10 минут для HLLC + TVD
-    for (int i = 0; i < 65000 * 3; i = i + 2)  // Сколько шагов по времени делаем?
+    for (int i = 0; i < 100000; i = i + 2)  // Сколько шагов по времени делаем?
     {
 
         if (i % 10000 == 0)

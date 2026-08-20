@@ -2764,7 +2764,7 @@ void Konstruktor::Drobim(double x1, double x2, double y1, double y2, double z1, 
 	int ll = 0;
 	for (auto& i : this->all_Kyb)
 	{
-		if ((i->x > x1) && (i->x < x2) && (i->y > y1) && (i->y < y2) && (i->z > z1) && (i->z < z2) && i->dx > 0.01)
+		if ((i->x > x1) && (i->x < x2) && (i->y > y1) && (i->y < y2) && (i->z > z1) && (i->z < z2))  // && i->dx > 0.01
 		{
 			ll++;
 			i->drob = true;
@@ -2772,7 +2772,7 @@ void Konstruktor::Drobim(double x1, double x2, double y1, double y2, double z1, 
 	}
 	
 	int mm = this->all_Kyb.size();
-	cout << ll << endl;
+	cout << "cell for droblenie: " << ll << endl;
 	for (int i = 0; i < mm; i++)
 	{
 		
