@@ -1468,7 +1468,7 @@ __global__ void funk_time(double* T, double* T_do, double* TT, int* i)
     *TT = *TT + *T_do;
     *T = 10000000;
     *i = *i + 1;
-    if (*i % 100 == 0)
+    if (*i % 5000 == 0)
     {
         printf("i = %d,  TT = %lf years,  dT = %lf hours \n", *i, *TT/0.00791429, *T_do / 9.03458E-7);
     }
@@ -2510,9 +2510,8 @@ __global__ void Cuda_main_HLLDQ(int* NN, double* X, double* Y, double* Z, double
                 dist = dz;
                 if (diver == true)
                 {
-                    //sks = n1 * (bx + bx) / 2.0 + n2 * (by + by) / 2.0 + n3 * (bz + bz) / 2.0;
-                    //sks = n1 * (bx + bx) / 2.0 + n2 * (by + by) / 2.0;
-                    sks = n1 * (bx + bxC) / 2.0 + n2 * (by + byC) / 2.0 + n3 * (bz + bzC) / 2.0;
+                    sks = n1 * (bx + bx) / 2.0 + n2 * (by + by) / 2.0 + n3 * (bz + bz) / 2.0;
+                    //sks = n1 * (bx + bxC) / 2.0 + n2 * (by + byC) / 2.0 + n3 * (bz + bzC) / 2.0;
                 }
                 else
                 {
@@ -2538,15 +2537,13 @@ __global__ void Cuda_main_HLLDQ(int* NN, double* X, double* Y, double* Z, double
                 Potok[8] = Potok[8] + sks * S;
                 if (!kor_Sol || metod <= 1 || metod == 3)
                 {
-                    //tmin = min(tmin, HLLDQ_Alexashov(ro, Q, p, su1, sv1, sw1, bx, by, bz, ro, Q, p, su1, sv1, -sw1, bx, by, -bz, P, PQ, n1, n2, n3, dist, metod));
-                    //tmin = min(tmin, HLLDQ_Alexashov(ro, Q, p, u, v, w, bx, by, bz, ro, Q, pC, u, v, w, bx, by, bz, P, PQ, n1, n2, n3, dist, metod));
-                    tmin = min(tmin, HLLDQ_Alexashov(ro, Q, p, u, v, w, bx, by, bz, roC, QC, pC, uC, vC, wC, bxC, byC, bzC, P, PQ, n1, n2, n3, dist, metod));
+                    tmin = min(tmin, HLLDQ_Alexashov(ro, Q, p, u, v, w, bx, by, bz, ro, Q, p, u, v, -w, bx, by, bz, P, PQ, n1, n2, n3, dist, metod)); // Симметрия
+                    //tmin = min(tmin, HLLDQ_Alexashov(ro, Q, p, u, v, w, bx, by, bz, roC, QC, pC, uC, vC, wC, bxC, byC, bzC, P, PQ, n1, n2, n3, dist, metod));
                 }
                 else
                 {
-                    tmin = min(tmin, HLLDQ_Korolkov(ro, Q, p, u, v, w, bx, by, bz, roC, QC, pC, uC, vC, wC, bxC, byC, bzC, P, PQ, n1, n2, n3, dist, metod));
-                    //tmin = min(tmin, HLLDQ_Korolkov(ro, Q, p, su1, sv1, sw1, bx, by, bz, ro, Q, p, su1, sv1, -sw1, bx, by, -bz, P, PQ, n1, n2, n3, dist, metod));
-                    //tmin = min(tmin, HLLDQ_Korolkov(ro, Q, p, u, v, w, bx, by, bz, ro, Q, pC, u, v, w, bx, by, bz, P, PQ, n1, n2, n3, dist, metod));
+                    //tmin = min(tmin, HLLDQ_Korolkov(ro, Q, p, u, v, w, bx, by, bz, roC, QC, pC, uC, vC, wC, bxC, byC, bzC, P, PQ, n1, n2, n3, dist, metod));
+                    tmin = min(tmin, HLLDQ_Korolkov(ro, Q, p, u, v, w, bx, by, bz, ro, Q, p, u, v, -w, bx, by, bz, P, PQ, n1, n2, n3, dist, metod));
                 }
                 for (int k = 0; k < 8; k++)  // Суммируем все потоки в ячейке
                 {
@@ -5227,12 +5224,13 @@ __global__ void Cuda_main_HLLDQ_TVD3(int* NN, double* X, double* Y, double* Z, d
                 Potok[8] = Potok[8] + sks * S;
                 if (!kor_Sol || my_metod <= 1 || my_metod == 3)
                 {
-                    tmin = min(tmin, HLLDQ_Alexashov(ro, Q, p, u, v, w, bx, by, bz, ro, Q, p, u, v, w, bx, by, bz, P, PQ, n1, n2, n3, dist, my_metod));
-                    //tmin = min(tmin, HLLDQ_Alexashov(ro, Q, p, u, v, w, bx, by, bz, ro, Q, pC, u, v, w, bx, by, bz, P, PQ, n1, n2, n3, dist, my_metod));
+                    //tmin = min(tmin, HLLDQ_Alexashov(ro, Q, p, u, v, w, bx, by, bz, ro, Q, p, u, v, w, bx, by, bz, P, PQ, n1, n2, n3, dist, my_metod));
+                    tmin = min(tmin, HLLDQ_Alexashov(ro, Q, p, u, v, w, bx, by, bz, ro, Q, p, u, v, -w, bx, by, bz, P, PQ, n1, n2, n3, dist, my_metod));
                 }
                 else
                 {
-                    tmin = min(tmin, HLLDQ_Korolkov(ro, Q, p, u, v, w, bx, by, bz, ro, Q, p, u, v, w, bx, by, bz, P, PQ, n1, n2, n3, dist, my_metod));
+                    //tmin = min(tmin, HLLDQ_Korolkov(ro, Q, p, u, v, w, bx, by, bz, ro, Q, p, u, v, w, bx, by, bz, P, PQ, n1, n2, n3, dist, my_metod));
+                    tmin = min(tmin, HLLDQ_Korolkov(ro, Q, p, u, v, w, bx, by, bz, ro, Q, p, u, v, -w, bx, by, bz, P, PQ, n1, n2, n3, dist, my_metod));
                 }
                 for (int k = 0; k < 8; k++)  // Суммируем все потоки в ячейке
                 {
@@ -5366,6 +5364,8 @@ cudaError_t addWithCuda()
 {
     cudaError_t cudaStatus;
 
+
+    // Основа для полной геометрии
     //Konstruktor K(32, 32, 32, -3000.0 * ae1, 3000.0 * ae1, -3000.0 * ae1, 3000.0 * ae1, -3000.0 * ae1, 3000.0 * ae1);
 
     //cout << "(1) All size = " << K.all_Kyb.size() << endl;
@@ -5382,6 +5382,24 @@ cudaError_t addWithCuda()
     //K.Drobim(0.0, 0.0, 0.0, 20.0 * ae1, 100.0 * ae1, 2, false);
     //cout << "All size = " << K.all_Kyb.size() << endl;
 
+    // Основа для половинной геометрии
+
+    //Konstruktor K(32, 32, 16, -3000.0 * ae1, 3000.0 * ae1, -3000.0 * ae1, 3000.0 * ae1, 0.0 * ae1, 3000.0 * ae1);
+
+    //cout << "(1) All size = " << K.all_Kyb.size() << endl;
+    //K.Drobim(-1800.0 * ae1, 1200.0 * ae1, -1800.0 * ae1, 1800.0 * ae1, -1800.0 * ae1, 1800.0 * ae1, 2);
+    //cout << "(2) All size = " << K.all_Kyb.size() << endl;
+    //K.Drobim(-1000.0 * ae1, 700.0 * ae1, -1200.0 * ae1, 1200.0 * ae1, -1200.0 * ae1, 1200.0 * ae1, 2);
+    //cout << "(3) All size = " << K.all_Kyb.size() << endl;
+    //K.Drobim(-600.0 * ae1, 350.0 * ae1, -600.0 * ae1, 600.0 * ae1, -600.0 * ae1, 600.0 * ae1, 2);
+    //cout << "(4) All size = " << K.all_Kyb.size() << endl;
+    //K.Drobim(-500.0 * ae1, 250.0 * ae1, -500.0 * ae1, 500.0 * ae1, -500.0 * ae1, 500.0 * ae1, 2);
+    //cout << "(5) All size = " << K.all_Kyb.size() << endl;
+    //K.Drobim(0.0, 0.0, 0.0, 30.0 * ae1, 160.0 * ae1, 2, false);
+    //cout << "(6) All size = " << K.all_Kyb.size() << endl;
+    //K.Drobim(0.0, 0.0, 0.0, 20.0 * ae1, 100.0 * ae1, 2, false);
+    //cout << "All size = " << K.all_Kyb.size() << endl;
+
 
     // Добавляем два мельчения: -450  230      370
     // Добавляем два мельчения: -350  200      330
@@ -5389,15 +5407,13 @@ cudaError_t addWithCuda()
     //Konstruktor K(100, 100, 160,   -3.06553, 3.06553, -3.06553, 3.06553,   0.0, 4.9048102);   // !!!!!!!!!!!!!!!!!!!!!!!
     //Konstruktor K("binary_Moscow_Boston_3-HLLD_TVD_2025.dat", true);
 
-    Konstruktor K("binary_Maat-HLLC-TVD-atoms-1.2.dat", true);
-    //Konstruktor K("Golikov_Setka_file_inst_16_MA_4.txt.txt", false);
-    //Konstruktor K("binary_Golikov_Setka_file_moscow_31_2024_vremenniy.dat", true);
+    Konstruktor K("binary_Maat-half-HLLC-TVD-atoms-1.0.dat", true);
 
-    cout << "(1) All size = " << K.all_Kyb.size() << endl;
-    K.Drobim(-500.0 * ae1, 450.0 * ae1, -500.0 * ae1, 500.0 * ae1, -500.0 * ae1, 500.0 * ae1, 2);
-    cout << "(2) All size = " << K.all_Kyb.size() << endl;
-    K.Drobim(-280.0 * ae1, 230.0 * ae1, -280.0 * ae1, 280.0 * ae1, -280.0 * ae1, 280.0 * ae1, 2);
-    cout << "(3) All size = " << K.all_Kyb.size() << endl;
+    //cout << "(1) All size = " << K.all_Kyb.size() << endl;
+    //K.Drobim(-500.0 * ae1, 450.0 * ae1, -500.0 * ae1, 500.0 * ae1, -500.0 * ae1, 500.0 * ae1, 2);
+    //cout << "(2) All size = " << K.all_Kyb.size() << endl;
+    //K.Drobim(-280.0 * ae1, 230.0 * ae1, -280.0 * ae1, 280.0 * ae1, -280.0 * ae1, 280.0 * ae1, 2);
+    //cout << "(3) All size = " << K.all_Kyb.size() << endl;
 
 
     // "Maat-Laks-1"
@@ -5405,9 +5421,10 @@ cudaError_t addWithCuda()
     // "Maat-HLLC-atoms-1"
     // "Maat-HLLC-TVD-atoms-1"    "Maat-HLLC-TVD-atoms-1.2" - улучшил ТВД на стыках
     // "Maat-HLLC-TVD-atoms-2"   добавил ячеек два набора
+    // 
 
 
-    string nam = "Maat-HLLC-TVD-atoms-2";  // Имя для вывода файлов
+    string nam = "Maat-half-HLLC-TVD-atoms-1.0";  // Имя для вывода файлов
     //string nam = "inst_N_16_MA_4_2025";  // Имя для вывода файлов
     //string nam = "inst_N_31movi_2024";  // Имя для вывода файлов
 
@@ -6186,7 +6203,7 @@ cudaError_t addWithCuda()
     MMM = 0.0;
     for (int i = 0; i < 0; i = i + 2)  // Сколько шагов по времени делаем?
     {
-        if (i % 50000 == 0)
+        if (i % 10000 == 0)
         {
             cout << "from HOST HLLDQ " << i << endl;
         }
@@ -6562,7 +6579,7 @@ cudaError_t addWithCuda()
 
 
     // 65000 - 10 минут для HLLC + TVD
-    for (int i = 0; i < 100000; i = i + 2)  // Сколько шагов по времени делаем?
+    for (int i = 0; i < 120000 * 3; i = i + 2)  // Сколько шагов по времени делаем?
     {
 
         if (i % 10000 == 0)

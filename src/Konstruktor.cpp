@@ -1810,10 +1810,10 @@ void Konstruktor::print_Tecplot_y_20(double y, double T, string nam, const doubl
 				i->u << " " << i->v << " " << i->w << " " << sqrt(kvv(i->u, i->v, i->w)) << //
 				" " << i->Bx << " " << i->By << " " << i->Bz << " " << sqrt(kvv(i->Bx, i->By, i->Bz)) << " " << Max << " " << Alf << " " << QQ << endl;
 
-			//fout << i->x * r_o << " " << -i->z * r_o << " " << sqrt(i->x * r_o * i->x * r_o + i->z * r_o * i->z * r_o) << " " << i->ro << " " << i->p << " " //
-			//	<< i->p + kvv(i->Bx, i->By, i->Bz) / cpi8 << " " << //
-			//	i->u << " " << i->v << " " << -i->w << " " << sqrt(kvv(i->u, i->v, i->w)) << //
-			//	" " << i->Bx << " " << i->By << " " << -i->Bz << " " << sqrt(kvv(i->Bx, i->By, i->Bz)) << " " << Max << " " << Alf << " " << QQ << " " << sqrt(kv(i->jx) + kv(i->jy) + kv(i->jz)) << " " << -i->jx << " " << -i->jy << " " << i->jz << endl;
+			fout << i->x / ae1 << " " << -i->z / ae1 << " " << sqrt(i->x * i->x + i->z * i->z) << " " << i->ro << " " << i->p << " " //
+				<< i->p + kvv(i->Bx, i->By, i->Bz) / cpi8 << " " << //
+				i->u << " " << i->v << " " << -i->w << " " << sqrt(kvv(i->u, i->v, i->w)) << //
+				" " << i->Bx << " " << i->By << " " << i->Bz << " " << sqrt(kvv(i->Bx, i->By, i->Bz)) << " " << Max << " " << Alf << " " << QQ << endl;
 		
 		}
 	}
