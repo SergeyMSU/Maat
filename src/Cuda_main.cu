@@ -51,7 +51,8 @@ __device__ int sign(double& x)
     }
 }
 
-__device__ void f_TVD(double& dx, double& p1, double& p2, double& p3, double& p4, double& p12, double& p21, double& s1, double& s2, double& s3)
+__device__ void f_TVD(const double& dx, const double& p1, const double& p2, const double& p3, const double& p4, 
+    double& p12, double& p21, const double& s1, const double& s2, const double& s3)
 {
     //double s1 = __dsqrt_rn(kv(x1 - x3) + kv(y1 - y3) + kv(z1 - z3));
     //double s2 = __dsqrt_rn(kv(x1 - x2) + kv(y1 - y2) + kv(z1 - z2));

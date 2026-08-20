@@ -1468,7 +1468,7 @@ __global__ void funk_time(double* T, double* T_do, double* TT, int* i)
     *TT = *TT + *T_do;
     *T = 10000000;
     *i = *i + 1;
-    if (*i % 5000 == 0)
+    if (*i % 100 == 0)
     {
         printf("i = %d,  TT = %lf years,  dT = %lf hours \n", *i, *TT/0.00791429, *T_do / 9.03458E-7);
     }
@@ -5322,6 +5322,752 @@ __global__ void Cuda_main_HLLDQ_TVD3(int* NN, double* X, double* Y, double* Z, d
 
 }
 
+__global__ void Cuda_main_HLLDQ_TVD3_symmetry(int* NN, double* X, double* Y, double* Z, double* DX, double* DY, double* DZ,//
+    double* RO1, double* RO2, double* Q1, double* Q2, double* P1, double* P2, double* U1, double* U2, double* V1, double* V2,//
+    double* W1, double* W2, double* BX1, double* BY1, double* BZ1, double* BX2, double* BY2, double* BZ2,//
+    int* SOSED, int* SOSED2, int* SOSED3, int* SOSED22, int* SOSED23, int* SOSED24, int* SOSED32, int* SOSED33, int* SOSED34,
+    int* L, int* R, double* T, double* T_do, int step_, double M_inf_, bool mgd = true, bool diver = true, int metod = 0)
+{
+    int index = blockIdx.x * blockDim.x + threadIdx.x; // √лобальный индекс текущего потока
+    if (index > *NN - 1)
+    {
+        return;
+    }
+    double x, y, z, dx, dy, dz, ro, p, u, v, w, bx, by, bz, Q;
+    int l = L[index];
+    int r = R[index];
+    int my_metod = metod;
+    x = X[index];
+    y = Y[index];
+    z = Z[index];
+    dx = DX[index];
+    dy = DY[index];
+    dz = DZ[index];
+    ro = RO1[index];
+    p = P1[index];
+    u = U1[index];
+    v = V1[index];
+    w = W1[index];
+    Q = Q1[index];
+    bx = BX1[index];
+    by = BY1[index];
+    bz = BZ1[index];
+
+
+
+
+    //double ddd = kv(y) + kv(z);
+    double ddd2 = kv(x) + kv(y) + kv(z);
+
+    if (ddd2 <= ddist * ddist) // || (ddd <= 4.0 && x > -5 && x < 0) ) //(ddd < 5.76 || ddd2 <= 2.0) //1.5
+    {
+        RO2[index] = ro;
+        P2[index] = p;
+        U2[index] = u;
+        V2[index] = v;
+        W2[index] = w;
+        BX2[index] = bx;
+        BY2[index] = by;
+        BZ2[index] = bz;
+        Q2[index] = Q;
+    }
+    else
+    {
+        /*metod = 3;
+        if (ddd2 <= 0.73 * 0.73)
+        {
+            metod = 2;
+        }*/
+
+        double n1 = 0.0;
+        double n2 = 0.0;
+        double n3 = 0.0;
+        double dist = 0.0;
+        double P[8] = { 0.0 };
+        P[0] = P[1] = P[2] = P[3] = P[4] = P[5] = P[6] = P[7] = 0.0;
+        double Potok[10] = { 0.0 };
+        Potok[0] = Potok[1] = Potok[2] = Potok[3] = Potok[4] = Potok[5] = Potok[6] = Potok[7] = Potok[8] = Potok[9] = 0.0;
+        double PQ;
+        double tmin = 1000;
+        double Volume = dx * dy * dz * 8.0;
+        int ii = 0;
+        double Q_2, x2, y2, z2, dx2, dy2, dz2, ro2, p2, u2, v2, w2, bx2, by2, bz2, sks;
+        double Q_3, x3, y3, z3, dx3, dy3, dz3, ro3, p3, u3, v3, w3, bx3, by3, bz3;
+        double Q_4, x4, y4, z4, dx4, dy4, dz4, ro4, p4, u4, v4, w4, bx4, by4, bz4;
+        double x12, y12, z12, dx12, dy12, dz12, ro12, p12, u12, v12, w12, bx12, by12, bz12, Q12, Q21;
+        double x21, y21, z21, dx21, dy21, dz21, ro21, p21, u21, v21, w21, bx21, by21, bz21;
+        double su1, sv1, sw1, su2, sv2, sw2, sro1, sro2, sp1, sp2;
+        double ur, up, uz;
+        double roC = 1.0; // 8.2598; //  1.0;
+        double pC = 1.0 / (ggg); // 1.0 / (ggg * M_inf * M_inf);
+        double uC = M_infty; // -1.0;
+        double vC = 0.0;
+        double wC = 0.0;
+        double QC = 100.0;
+        double bxC, byC, bzC;
+        bxC = 0.0;
+        byC = 0.0;
+        bzC = B_inf;
+
+        int kk, kk2, l2, r2;
+        for (int i = l; i <= r; i++)
+        {
+            my_metod = metod;
+            ii = SOSED[i];
+            if (ii >= 0)
+            {
+                x2 = X[ii];
+                y2 = Y[ii];
+                z2 = Z[ii];
+                dx2 = DX[ii];
+                dy2 = DY[ii];
+                dz2 = DZ[ii];
+                ro2 = RO1[ii];
+                p2 = P1[ii];
+                u2 = U1[ii];
+                v2 = V1[ii];
+                w2 = W1[ii];
+                Q_2 = Q1[ii];
+                bx2 = BX1[ii];
+                by2 = BY1[ii];
+                bz2 = BZ1[ii];
+
+                double ddd3 = kv((z + z2) / 2.0) + kv((x + x2) / 2.0) + kv((y + y2) / 2.0);
+
+                kk = SOSED2[i];
+                if (kk != -1 && ddd3 > (ddist2 * ddist2)) //&& ddd2 > 0.8
+                {
+                    if (kk != -6)
+                    {
+                        //dx3 = DX[kk];
+                        x3 = X[kk];
+                        y3 = Y[kk];
+                        z3 = Z[kk];
+                        ro3 = RO1[kk];
+                        p3 = P1[kk];
+                        u3 = U1[kk];
+                        v3 = V1[kk];
+                        w3 = W1[kk];
+                        Q_3 = Q1[kk];
+                        bx3 = BX1[kk];
+                        by3 = BY1[kk];
+                        bz3 = BZ1[kk];
+                    }
+                    else if(kk == -6)
+                    {
+                        //dx3 = dx;
+                        x3 = x;
+                        y3 = y;
+                        z3 = -z;
+                        ro3 = ro;
+                        p3 = p;
+                        u3 = u;
+                        v3 = v;
+                        w3 = -w;
+                        Q_3 = Q;
+                        bx3 = bx;
+                        by3 = by;
+                        bz3 = bz;
+                    }
+                    else
+                    {
+                        printf("Errrrrr drgedrgertfertge4rfewrfw: %d\n", kk);
+                    }
+
+                    int kk2 = SOSED22[i];
+                    if (kk2 != -1)
+                    {
+                        // ¬ этом случае у €чейки 4 соседа с этой стороны и нужно сносить средние значени€
+                        ro3 = (ro3 + RO1[kk2] + RO1[SOSED23[i]] + RO1[SOSED24[i]]) / 4.0;
+                        p3 = (p3 + P1[kk2] + P1[SOSED23[i]] + P1[SOSED24[i]]) / 4.0;
+                        u3 = (u3 + U1[kk2] + U1[SOSED23[i]] + U1[SOSED24[i]]) / 4.0;
+                        v3 = (v3 + V1[kk2] + V1[SOSED23[i]] + V1[SOSED24[i]]) / 4.0;
+                        w3 = (w3 + W1[kk2] + W1[SOSED23[i]] + W1[SOSED24[i]]) / 4.0;
+                        Q_3 = (Q_3 + Q1[kk2] + Q1[SOSED23[i]] + Q1[SOSED24[i]]) / 4.0;
+                        bx3 = (bx3 + BX1[kk2] + BX1[SOSED23[i]] + BX1[SOSED24[i]]) / 4.0;
+                        by3 = (by3 + BY1[kk2] + BY1[SOSED23[i]] + BY1[SOSED24[i]]) / 4.0;
+                        bz3 = (bz3 + BZ1[kk2] + BZ1[SOSED23[i]] + BZ1[SOSED24[i]]) / 4.0;
+                    }
+
+                    kk2 = SOSED3[i];
+
+                    if (kk2 != -6)
+                    {
+                        //dx4 = DX[kk2];
+                        x4 = X[kk2];
+                        y4 = Y[kk2];
+                        z4 = Z[kk2];
+                        ro4 = RO1[kk2];
+                        p4 = P1[kk2];
+                        u4 = U1[kk2];
+                        v4 = V1[kk2];
+                        w4 = W1[kk2];
+                        Q_4 = Q1[kk2];
+                        bx4 = BX1[kk2];
+                        by4 = BY1[kk2];
+                        bz4 = BZ1[kk2];
+                    }
+                    else
+                    {
+                        //dx4 = DX[kk2];
+                        x4 = x2;
+                        y4 = y2;
+                        z4 = -z2;
+                        ro4 = ro2;
+                        p4 = p2;
+                        u4 = u2;
+                        v4 = v2;
+                        w4 = -w2;
+                        Q_4 = Q_2;
+                        bx4 = bx2;
+                        by4 = by2;
+                        bz4 = bz2;
+                        //printf("TUT: %d\n", kk2);
+                    }
+
+                    kk2 = SOSED32[i];
+                    if (kk2 != -1)
+                    {
+                        // ¬ этом случае у €чейки 4 соседа с этой стороны и нужно сносить средние значени€
+                        ro4 = (ro4 + RO1[kk2] + RO1[SOSED33[i]] + RO1[SOSED34[i]]) / 4.0;
+                        p4 = (p4 + P1[kk2] + P1[SOSED33[i]] + P1[SOSED34[i]]) / 4.0;
+                        u4 = (u4 + U1[kk2] + U1[SOSED33[i]] + U1[SOSED34[i]]) / 4.0;
+                        v4 = (v4 + V1[kk2] + V1[SOSED33[i]] + V1[SOSED34[i]]) / 4.0;
+                        w4 = (w4 + W1[kk2] + W1[SOSED33[i]] + W1[SOSED34[i]]) / 4.0;
+                        Q_4 = (Q_4 + Q1[kk2] + Q1[SOSED33[i]] + Q1[SOSED34[i]]) / 4.0;
+                        bx4 = (bx4 + BX1[kk2] + BX1[SOSED33[i]] + BX1[SOSED34[i]]) / 4.0;
+                        by4 = (by4 + BY1[kk2] + BY1[SOSED33[i]] + BY1[SOSED34[i]]) / 4.0;
+                        bz4 = (bz4 + BZ1[kk2] + BZ1[SOSED33[i]] + BZ1[SOSED34[i]]) / 4.0;
+                    }
+
+
+                    double S = get_square(x, y, z, dx, dy, dz, x2, y2, z2, dx2, dy2, dz2, n1, n2, n3, dist);
+                    double dd = 0.0;
+                    if (n1 != 0)
+                    {
+                        dd = dx;
+                    }
+                    else if (n2 != 0)
+                    {
+                        dd = dy;
+                    }
+                    else if (n3 != 0)
+                    {
+                        dd = dz;
+                    }
+                    else
+                    {
+                        printf("Errrrrr 2323132214243\n");
+                    }
+
+                    double s1 = __dsqrt_rn(kv(x - x3) + kv(y - y3) + kv(z - z3));
+                    double s2 = __dsqrt_rn(kv(x - x2) + kv(y - y2) + kv(z - z2));
+                    double s3 = __dsqrt_rn(kv(x4 - x2) + kv(y4 - y2) + kv(z4 - z2));
+                    // p3, p, p2, p4
+                    f_TVD(dd, Q, Q_2, Q_3, Q_4, Q12, Q21, s1, s2, s3);
+                    f_TVD(dd, p, p2, p3, p4, p12, p21, s1, s2, s3);
+                    f_TVD(dd, ro, ro2, ro3, ro4, ro12, ro21, s1, s2, s3);
+                    f_TVD(dd, u, u2, u3, u4, u12, u21, s1, s2, s3);
+                    f_TVD(dd, v, v2, v3, v4, v12, v21, s1, s2, s3);
+                    f_TVD(dd, w, w2, w3, w4, w12, w21, s1, s2, s3);
+                    f_TVD(dd, bx, bx2, bx3, bx4, bx12, bx21, s1, s2, s3);
+                    f_TVD(dd, by, by2, by3, by4, by12, by21, s1, s2, s3);
+                    f_TVD(dd, bz, bz2, bz3, bz4, bz12, bz21, s1, s2, s3);
+                    if (Q12 <= 0.0)
+                    {
+                        Q12 = Q;
+                    }
+                    if (Q21 <= 0.0)
+                    {
+                        Q21 = Q_2;
+                    }
+                    if (ro12 <= 0.0)
+                    {
+                        ro12 = ro;
+                    }
+                    if (p12 <= 0.0)
+                    {
+                        p12 = p;
+                    }
+                    if (ro21 <= 0.0)
+                    {
+                        ro21 = ro2;
+                    }
+                    if (p21 <= 0.0)
+                    {
+                        p21 = p2;
+                    }
+
+                    //if (kvv(u, v, w) / (ggg * p / ro) > 100.0 || kvv(u2, v2, w2) / (ggg * p2 / ro2) > 100.0 || 
+                    //    kvv(u3, v3, w3) / (ggg * p3 / ro3) > 100.0 || kvv(u4, v4, w4) / (ggg * p4 / ro4) > 100.0)
+                    if (false)
+                    {
+                        my_metod = 1;
+
+                        ro12 = ro;
+                        p12 = p;
+                        Q12 = Q;
+                        u12 = u;
+                        v12 = v;
+                        w12 = w;
+                        bx12 = bx;
+                        by12 = by;
+                        bz12 = bz;
+
+                        ro21 = ro2;
+                        p21 = p2;
+                        Q21 = Q_2;
+                        u21 = u2;
+                        v21 = v2;
+                        w21 = w2;
+                        bx21 = bx2;
+                        by21 = by2;
+                        bz21 = bz2;
+                    }
+
+
+                    //if(ddd2 < 0.8) my_metod = 1;
+
+
+                    sks = n1 * (bx12 + bx21) / 2.0 + n2 * (by12 + by21) / 2.0 + n3 * (bz12 + bz21) / 2.0;
+
+                    Potok[8] = Potok[8] + sks * S;
+
+
+
+                    if (!kor_Sol || my_metod <= 1 || my_metod == 3)
+                    {
+                        tmin = min(tmin, HLLDQ_Alexashov(ro12, Q12, p12, u12, v12, w12, bx12, by12, bz12, ro21, Q21, p21, u21, v21, w21, bx21, by21, bz21, P, PQ, n1, n2, n3, dist, my_metod));
+                    }
+                    else
+                    {
+                        tmin = min(tmin, HLLDQ_Korolkov(ro12, Q12, p12, u12, v12, w12, bx12, by12, bz12, ro21, Q21, p21, u21, v21, w21, bx21, by21, bz21, P, PQ, n1, n2, n3, dist, my_metod));
+                    }
+
+
+                    for (int k = 0; k < 8; k++)  // —уммируем все потоки в €чейке
+                    {
+                        Potok[k] = Potok[k] + P[k] * S;
+                    }
+                    Potok[9] = Potok[9] + PQ * S;
+                }
+                else
+                {
+                    double S = get_square(x, y, z, dx, dy, dz, x2, y2, z2, dx2, dy2, dz2, n1, n2, n3, dist);
+
+                    sks = n1 * (bx + bx2) / 2.0 + n2 * (by + by2) / 2.0 + n3 * (bz + bz2) / 2.0;
+                    Potok[8] = Potok[8] + sks * S;
+
+                    su1 = u;
+                    sv1 = v;
+                    sw1 = w;
+
+                    su2 = u2;
+                    sv2 = v2;
+                    sw2 = w2;
+
+                    sro1 = ro;
+                    sro2 = ro2;
+
+                    sp1 = p;
+                    sp2 = p2;
+
+                    // ƒелаем перенос в сферической —  
+                    if (ddd3 <= (ddist2 * ddist2))
+                        //if (kvv(u, v, w) / (ggg * p / ro) > 100.0 && kvv(u2, v2, w2) / (ggg * p2 / ro2) > 100.0)
+                    {
+                        //my_metod = 1;
+
+                        spherical_skorost(z, x, y, w, u, v, ur, up, uz);
+                        dekard_skorost((z + z2) / 2.0, (x + x2) / 2.0, (y + y2) / 2.0, ur, up, uz, sw1, su1, sv1);
+
+                        spherical_skorost(z2, x2, y2, w2, u2, v2, ur, up, uz);
+                        dekard_skorost((z + z2) / 2.0, (x + x2) / 2.0, (y + y2) / 2.0, ur, up, uz, sw2, su2, sv2);
+
+                        sro1 = ro * (kv(z) + kv(x) + kv(y)) / ddd3;
+                        sro2 = ro2 * (kv(z2) + kv(x2) + kv(y2)) / ddd3;
+
+                        sp1 = p * pow((kv(z) + kv(x) + kv(y)) / ddd3, ggg);
+                        sp2 = p2 * pow((kv(z2) + kv(x2) + kv(y2)) / ddd3, ggg);
+                    }
+
+
+
+                    /*if (!kor_Sol || metod == 1 || metod == 3)
+                    {
+                        tmin = min(tmin, HLLDQ_Alexashov(ro, Q, p, u, v, w, bx, by, bz, ro2, Q_2, p2, u2, v2, w2, bx2, by2, bz2, P, PQ, n1, n2, n3, dist, metod));
+                    }
+                    else
+                    {
+                        tmin = min(tmin, HLLDQ_Korolkov(ro, Q, p, u, v, w, bx, by, bz, ro2, Q_2, p2, u2, v2, w2, bx2, by2, bz2, P, PQ, n1, n2, n3, dist, metod));
+                    }*/
+
+                    if (my_metod <= 1 || my_metod == 3)//(y * y + z * z < 225 && y2 * y2 + z2 * z2 < 225 && x > -15 && x2 > -15 && x < 8 && x2 < 8  && step_ > 10000)
+                    {
+                        tmin = min(tmin, HLLDQ_Alexashov(sro1, Q, sp1, su1, sv1, sw1, bx, by, bz, sro2, Q_2, sp2, su2, sv2, sw2, bx2, by2, bz2, P, PQ, n1, n2, n3, dist, my_metod));
+                    }
+                    else
+                    {
+                        tmin = min(tmin, HLLDQ_Korolkov(sro1, Q, sp1, su1, sv1, sw1, bx, by, bz, sro2, Q_2, sp2, su2, sv2, sw2, bx2, by2, bz2, P, PQ, n1, n2, n3, dist, my_metod));
+                    }
+
+
+                    for (int k = 0; k < 8; k++)  // —уммируем все потоки в €чейке
+                    {
+                        Potok[k] = Potok[k] + P[k] * S;
+                    }
+                    Potok[9] = Potok[9] + PQ * S;
+                }
+
+            }
+            else if (ii == -1)
+            {
+                double S = dy * dz * 4.0;
+                n1 = 1.0;
+                n2 = 0.0;
+                n3 = 0.0;
+                dist = dx;
+                sks = n1 * (bx + bxC) / 2.0 + n2 * (by + byC) / 2.0 + n3 * (bz + bzC) / 2.0;
+
+                /*double uu = u;
+                if (uu < 0.0)
+                {
+                    uu = 0.0;
+                }*/
+                Potok[8] = Potok[8] + sks * S;
+                if (!kor_Sol || my_metod <= 1 || my_metod == 3)
+                {
+                    tmin = min(tmin, HLLDQ_Alexashov(ro, Q, p, u, v, w, bx, by, bz, roC, QC, pC, uC, vC, wC, bxC, byC, bzC, P, PQ, n1, n2, n3, dist, my_metod));
+                }
+                else
+                {
+                    tmin = min(tmin, HLLDQ_Korolkov(ro, Q, p, u, v, w, bx, by, bz, roC, QC, pC, uC, vC, wC, bxC, byC, bzC, P, PQ, n1, n2, n3, dist, my_metod));
+                }
+
+                for (int k = 0; k < 8; k++)  // —уммируем все потоки в €чейке
+                {
+                    Potok[k] = Potok[k] + P[k] * S;
+                }
+                Potok[9] = Potok[9] + PQ * S;
+            }
+            else if (ii == -2)
+            {
+                double S = dy * dz * 4.0;
+                n1 = -1.0;
+                n2 = 0.0;
+                n3 = 0.0;
+                dist = dx;
+                sks = n1 * bx + n2 * by + n3 * bz;
+
+                Potok[8] = Potok[8] + sks * S;
+                double uu = u;
+                if (uu > M_infty / 3.0)
+                {
+                    uu = M_infty;
+                }
+                /*else if (uu > -0.01)
+                {
+                    uu = -0.01;
+                }*/
+
+                if (!kor_Sol || my_metod <= 1 || my_metod == 3)
+                {
+                    tmin = min(tmin, HLLDQ_Alexashov(ro, Q, p, u, v, w, bx, by, bz, ro, Q, p, uu, v, w, bx, by, bz, P, PQ, n1, n2, n3, dist, my_metod));
+                }
+                else
+                {
+                    tmin = min(tmin, HLLDQ_Korolkov(ro, Q, p, u, v, w, bx, by, bz, ro, Q, p, uu, v, w, bx, by, bz, P, PQ, n1, n2, n3, dist, my_metod));
+                }
+
+                /*double t1, t2, t3, m1, m2, m3;
+                double bx_L = bx / spi4;
+                double by_L = by / spi4;
+                double bz_L = bz / spi4;
+                t1 = 0.0;
+                t2 = 0.0;
+                t3 = 1.0;
+                m1 = 0.0;
+                m2 = 1.0;
+                m3 = 0.0;
+                double u1 = uu * n1 + v * n2 + w * n3;
+                double v1 = uu * t1 + v * t2 + w * t3;
+                double w1 = uu * m1 + v * m2 + w * m3;
+                double bn1, bt1, bm1;
+                bn1 = bx_L * n1 + by_L * n2 + bz_L * n3;
+                bt1 = bx_L * t1 + by_L * t2 + bz_L * t3;
+                bm1 = bx_L * m1 + by_L * m2 + bz_L * m3;
+                double uu_L = (kv(uu) + kv(v) + kv(w)) / 2.0;
+                double bb_L = kv(bx_L) + kv(by_L) + kv(bz_L);
+                double e1 = p / g1 + ro * uu_L + bb_L / 2.0;
+                double pTL = p + bb_L / 2.0;
+
+                double PO[9];
+
+                PO[0] = ro * u1;
+                PO[1] = ro * u1 * u1 + pTL - kv(bn1);
+                PO[2] = ro * u1 * v1 - bn1 * bt1;
+                PO[3] = ro * u1 * w1 - bn1 * bm1;
+                PO[4] = (e1 + pTL) * u1 - bn1 * (u1 * bn1 + v1 * bt1 + w1 * bm1);
+                PO[5] = 0.0;
+                PO[6] = u1 * bt1 - v1 * bn1;
+                PO[7] = u1 * bm1 - w1 * bn1;
+                PO[8] = Q * u1;
+
+
+                P[1] = n1 * PO[1] + t1 * PO[2] + m1 * PO[3];
+                P[2] = n2 * PO[1] + t2 * PO[2] + m2 * PO[3];
+                P[3] = n3 * PO[1] + t3 * PO[2] + m3 * PO[3];
+                P[5] = spi4 * (n1 * PO[5] + t1 * PO[6] + m1 * PO[7]);
+                P[6] = spi4 * (n2 * PO[5] + t2 * PO[6] + m2 * PO[7]);
+                P[7] = spi4 * (n3 * PO[5] + t3 * PO[6] + m3 * PO[7]);
+                P[0] = PO[0];
+                P[4] = PO[4];
+                PQ = PO[8];
+
+                double SWAP = P[4];
+                P[4] = P[5];
+                P[5] = P[6];
+                P[6] = P[7];
+                P[7] = SWAP;*/
+
+                for (int k = 0; k < 8; k++)  // —уммируем все потоки в €чейке
+                {
+                    Potok[k] = Potok[k] + P[k] * S;
+                }
+                Potok[9] = Potok[9] + PQ * S;
+            }
+            else if (ii == -3)
+            {
+                double S = dx * dz * 4.0;
+                n1 = 0.0;
+                n2 = 1.0;
+                n3 = 0.0;
+                dist = dy;
+
+                sks = n1 * (bx + bx) / 2.0 + n2 * (by + by) / 2.0 + n3 * (bz + bz) / 2.0;
+
+                Potok[8] = Potok[8] + sks * S;
+                if (!kor_Sol || my_metod <= 1 || my_metod == 3)
+                {
+                    tmin = min(tmin, HLLDQ_Alexashov(ro, Q, p, u, v, w, bx, by, bz, ro, Q, p, u, v, w, bx, by, bz, P, PQ, n1, n2, n3, dist, my_metod));
+                }
+                else
+                {
+                    tmin = min(tmin, HLLDQ_Korolkov(ro, Q, p, u, v, w, bx, by, bz, ro, Q, p, u, v, w, bx, by, bz, P, PQ, n1, n2, n3, dist, my_metod));
+                }
+                for (int k = 0; k < 8; k++)  // —уммируем все потоки в €чейке
+                {
+                    Potok[k] = Potok[k] + P[k] * S;
+                }
+                Potok[9] = Potok[9] + PQ * S;
+            }
+            else if (ii == -4)
+            {
+                double S = dx * dz * 4.0;
+                n1 = 0.0;
+                n2 = -1.0;
+                n3 = 0.0;
+                dist = dy;
+                sks = n1 * (bx + bx) / 2.0 + n2 * (by + by) / 2.0 + n3 * (bz + bz) / 2.0;
+
+                Potok[8] = Potok[8] + sks * S;
+                if (!kor_Sol || my_metod <= 1 || my_metod == 3)
+                {
+                    //tmin = min(tmin, HLLDQ_Alexashov(ro, Q, p, u, v, w, bx, by, bz, ro, Q, p, u, -v, w, -bx, by, -bz, P, PQ, n1, n2, n3, dist, my_metod));
+                    //tmin = min(tmin, HLLDQ_Alexashov(ro, Q, p, u, v, w, bx, by, bz, ro, Q, pC, u, v, w, bx, by, bz, P, PQ, n1, n2, n3, dist, my_metod));
+                    tmin = min(tmin, HLLDQ_Alexashov(ro, Q, p, u, v, w, bx, by, bz, ro, Q, p, u, v, w, bx, by, bz, P, PQ, n1, n2, n3, dist, my_metod));
+
+                }
+                else
+                {
+                    //tmin = min(tmin, HLLDQ_Korolkov(ro, Q, p, u, v, w, bx, by, bz, ro, Q, p, u, -v, w, -bx, by, -bz, P, PQ, n1, n2, n3, dist, my_metod));
+                    //tmin = min(tmin, HLLDQ_Korolkov(ro, Q, p, u, v, w, bx, by, bz, ro, Q, p, u, v, w, bx, by, bz, P, PQ, n1, n2, n3, dist, my_metod));
+                    tmin = min(tmin, HLLDQ_Korolkov(ro, Q, p, u, v, w, bx, by, bz, ro, Q, p, u, v, w, bx, by, bz, P, PQ, n1, n2, n3, dist, my_metod));
+
+                }
+
+                for (int k = 0; k < 8; k++)  // —уммируем все потоки в €чейке
+                {
+                    Potok[k] = Potok[k] + P[k] * S;
+                }
+                Potok[9] = Potok[9] + PQ * S;
+            }
+            else if (ii == -5)
+            {
+                double S = dy * dx * 4.0;
+                n1 = 0.0;
+                n2 = 0.0;
+                n3 = 1.0;
+                dist = dz;
+                sks = n1 * (bx + bx) / 2.0 + n2 * (by + by) / 2.0 + n3 * (bz + bz) / 2.0;
+
+
+                Potok[8] = Potok[8] + sks * S;
+                if (!kor_Sol || my_metod <= 1 || my_metod == 3)
+                {
+                    tmin = min(tmin, HLLDQ_Alexashov(ro, Q, p, u, v, w, bx, by, bz, ro, Q, p, u, v, w, bx, by, bz, P, PQ, n1, n2, n3, dist, my_metod));
+                }
+                else
+                {
+                    tmin = min(tmin, HLLDQ_Korolkov(ro, Q, p, u, v, w, bx, by, bz, ro, Q, p, u, v, w, bx, by, bz, P, PQ, n1, n2, n3, dist, my_metod));
+                }
+
+                for (int k = 0; k < 8; k++)  // —уммируем все потоки в €чейке
+                {
+                    Potok[k] = Potok[k] + P[k] * S;
+                }
+                Potok[9] = Potok[9] + PQ * S;
+            }
+            else if (ii == -6)
+            {
+                double S = dy * dx * 4.0;
+                n1 = 0.0;
+                n2 = 0.0;
+                n3 = -1.0;
+                dist = dz;
+                sks = n1 * (bx + bx) / 2.0 + n2 * (by + by) / 2.0 + n3 * (bz + bz) / 2.0;
+
+                kk = SOSED2[i];
+
+                if (kk != -1) //&& ddd2 > 0.8
+                {
+                    w3 = W1[kk];
+
+                    double dd = 0.0;
+                    if (n1 != 0)
+                    {
+                        dd = dx;
+                    }
+                    else if (n2 != 0)
+                    {
+                        dd = dy;
+                    }
+                    else if (n3 != 0)
+                    {
+                        dd = dz;
+                    }
+                    else
+                    {
+                        printf("Errrrrr 2323132214243\n");
+                    }
+
+
+                    f_TVD(dd, w, -w, w3, -w3, w12, w21, 2 * dz, 2 * dz, 2 * dz);
+                }
+                else
+                {
+                    w12 = w;
+                    w21 = -w;
+                }
+
+                if (abs(w12 + w21) > 0.0000001)
+                {
+                    printf("Errrrrr tyhgrtgertf345rt3r43:  %lf, %lf\n", w12, w21);
+                }
+
+
+                Potok[8] = Potok[8] + sks * S;
+                if (!kor_Sol || my_metod <= 1 || my_metod == 3)
+                {
+                    //tmin = min(tmin, HLLDQ_Alexashov(ro, Q, p, u, v, w, bx, by, bz, ro, Q, p, u, v, w, bx, by, bz, P, PQ, n1, n2, n3, dist, my_metod));
+                    tmin = min(tmin, HLLDQ_Alexashov(ro, Q, p, u, v, w12, bx, by, bz, ro, Q, p, u, v, w21, bx, by, bz, P, PQ, n1, n2, n3, dist, my_metod));
+                }
+                else
+                {
+                    //tmin = min(tmin, HLLDQ_Korolkov(ro, Q, p, u, v, w, bx, by, bz, ro, Q, p, u, v, w, bx, by, bz, P, PQ, n1, n2, n3, dist, my_metod));
+                    tmin = min(tmin, HLLDQ_Korolkov(ro, Q, p, u, v, w12, bx, by, bz, ro, Q, p, u, v, w21, bx, by, bz, P, PQ, n1, n2, n3, dist, my_metod));
+                }
+                for (int k = 0; k < 8; k++)  // —уммируем все потоки в €чейке
+                {
+                    Potok[k] = Potok[k] + P[k] * S;
+                }
+                Potok[9] = Potok[9] + PQ * S;
+            }
+            else
+            {
+                printf("Error 12438jdyu. Ne doljni suda popadat = %d \n", ii);
+            }
+        }
+
+
+        double q2_1 = 0.0, q2_2 = 0.0, q2_3 = 0.0, q3 = 0.0;
+
+        if (true)//(istoch == true)
+        {
+            double u_H4 = M_infty, v_H4 = 0.0, w_H4 = 0.0, ro_H4 = 1.0, p_H4 = 1.0 / (2.0 * ggg);
+
+            double U_M_H4 = sqrt(kv(u - u_H4) + kv(v - v_H4) + kv(w - w_H4) + (64.0 / (9.0 * pi)) //
+                * (p / ro + 2.0 * p_H4 / ro_H4));
+
+            double U_H4 = sqrt(kv(u - u_H4) + kv(v - v_H4) + kv(w - w_H4) + (4.0 / pi) //
+                * (p / ro + 2.0 * p_H4 / ro_H4));
+
+            double sigma_H4 = kv(1.0 - a_2 * log(U_M_H4));
+
+            double nu_H4 = ro * ro_H4 * U_M_H4 * sigma_H4;
+
+            q2_1 = (1.5 / Kn_) * (nu_H4 * (u_H4 - u));
+            q2_2 = (1.5 / Kn_) * (nu_H4 * (v_H4 - v));
+            q2_3 = (1.5 / Kn_) * (nu_H4 * (w_H4 - w));
+
+
+            q3 = (1.5 / Kn_) * (nu_H4 * ((kv(u_H4) + kv(v_H4) + kv(w_H4) - kv(u) - kv(v) - kv(w)) / 2.0 + //
+                (U_H4 / U_M_H4) * (2.0 * p_H4 / ro_H4 - p / ro)));
+        }
+
+
+        double ro33, p33, u33, v33, w33, bx33, by33, bz33, Q33;
+
+
+        Q33 = Q - *T_do * Potok[9] / Volume;
+        ro33 = ro - *T_do * Potok[0] / Volume;
+        if (ro33 <= 0.0)
+        {
+            printf("ERROR -  dssdbfhfshjskfutytqqazz\n");
+            printf("%lf, %lf, %lf, %lf\n", x, y, z, ro33);
+            ro33 = ro;
+        }
+        u33 = (ro * u - *T_do * (Potok[1] + (bx / cpi4) * Potok[8] - q2_1 * Volume) / Volume) / ro33;
+        v33 = (ro * v - *T_do * (Potok[2] + (by / cpi4) * Potok[8] - q2_2 * Volume) / Volume) / ro33;
+        w33 = (ro * w - *T_do * (Potok[3] + (bz / cpi4) * Potok[8] - q2_3 * Volume) / Volume) / ro33;
+        bx33 = (bx - *T_do * (Potok[4] + u * Potok[8]) / Volume);
+        by33 = (by - *T_do * (Potok[5] + v * Potok[8]) / Volume);
+        bz33 = (bz - *T_do * (Potok[6] + w * Potok[8]) / Volume);
+        p33 = ((U8(ro, p, u, v, w, bx, by, bz) - *T_do * (Potok[7] + (skk(u, v, w, bx, by, bz) / cpi4) * Potok[8] - q3 * Volume)//
+            / Volume) - 0.5 * ro33 * kvv(u33, v33, w33) - kvv(bx33, by33, bz33) / cpi8) * (ggg - 1.0);
+        //u3 = (ro * u - *T_do * (Potok[1] + (bx) * Potok[8]) / Volume) / ro3;
+        //v3 = (ro * v - *T_do * (Potok[2] + (by) * Potok[8]) / Volume) / ro3;
+        //w3 = (ro * w - *T_do * (Potok[3] + (bz) * Potok[8]) / Volume) / ro3;
+        //bx3 = (bx - *T_do * (Potok[4] + u * Potok[8]) / Volume);
+        //by3 = (by - *T_do * (Potok[5] + v * Potok[8]) / Volume);
+        //bz3 = (bz - *T_do * (Potok[6] + w * Potok[8]) / Volume);
+        //p3 = ((U8(ro, p, u, v, w, bx, by, bz) - *T_do * (Potok[7] + (skk(u, v, w, bx, by, bz)) * Potok[8])//
+        //    / Volume) - 0.5 * ro3 * kvv(u3, v3, w3) - kvv(bx3, by3, bz3)) * (ggg - 1.0);
+        if (p33 <= 0)
+        {
+            p33 = 0.000001;
+        }
+
+        Q2[index] = Q33;
+        RO2[index] = ro33;
+        P2[index] = p33;
+        U2[index] = u33;
+        V2[index] = v33;
+        W2[index] = w33;
+        BX2[index] = bx33;
+        BY2[index] = by33;
+        BZ2[index] = bz33;
+
+        if (*T > tmin)
+        {
+            *T = tmin;
+            __threadfence();
+        }
+    }
+
+}
+
+
 
 int main()
 {
@@ -5407,13 +6153,24 @@ cudaError_t addWithCuda()
     //Konstruktor K(100, 100, 160,   -3.06553, 3.06553, -3.06553, 3.06553,   0.0, 4.9048102);   // !!!!!!!!!!!!!!!!!!!!!!!
     //Konstruktor K("binary_Moscow_Boston_3-HLLD_TVD_2025.dat", true);
 
-    Konstruktor K("binary_Maat-half-HLLC-TVD-atoms-1.0.dat", true);
+    Konstruktor K("binary_Maat-HLLC-TVD-atoms-2.dat", true);
 
     //cout << "(1) All size = " << K.all_Kyb.size() << endl;
     //K.Drobim(-500.0 * ae1, 450.0 * ae1, -500.0 * ae1, 500.0 * ae1, -500.0 * ae1, 500.0 * ae1, 2);
     //cout << "(2) All size = " << K.all_Kyb.size() << endl;
     //K.Drobim(-280.0 * ae1, 230.0 * ae1, -280.0 * ae1, 280.0 * ae1, -280.0 * ae1, 280.0 * ae1, 2);
     //cout << "(3) All size = " << K.all_Kyb.size() << endl;
+
+
+    //cout << "(1) All size = " << K.all_Kyb.size() << endl;
+    //K.Drobim(-800.0 * ae1, 400.0 * ae1, -700.0 * ae1, 700.0 * ae1, -700.0 * ae1, 700.0 * ae1, 2);
+    //cout << "(2) All size = " << K.all_Kyb.size() << endl;
+    //K.Drobim(-420.0 * ae1, 190.0 * ae1, -240.0 * ae1, 240.0 * ae1, -370.0 * ae1, 370.0 * ae1, 2);
+    //cout << "(3) All size = " << K.all_Kyb.size() << endl;
+
+    // —только уже не вывозим:
+    //K.Drobim(-400.0 * ae1, 170.0 * ae1, -220.0 * ae1, 220.0 * ae1, -350.0 * ae1, 350.0 * ae1, 2);
+    //cout << "(4) All size = " << K.all_Kyb.size() << endl;
 
 
     // "Maat-Laks-1"
@@ -5424,7 +6181,7 @@ cudaError_t addWithCuda()
     // 
 
 
-    string nam = "Maat-half-HLLC-TVD-atoms-1.0";  // »м€ дл€ вывода файлов
+    string nam = "Maat-HLLC-TVD-atoms-2";  // »м€ дл€ вывода файлов
     //string nam = "inst_N_16_MA_4_2025";  // »м€ дл€ вывода файлов
     //string nam = "inst_N_31movi_2024";  // »м€ дл€ вывода файлов
 
@@ -5686,8 +6443,11 @@ cudaError_t addWithCuda()
         host_sosed34 = new int[nn];
         cout << "Generiruem TVD massivi - start" << endl;
         K.Generate_sosed_for_TVD(host_sosed2, host_sosed3, host_sosed22, host_sosed23, host_sosed24, host_sosed32, host_sosed33, host_sosed34);
+        //K.Generate_sosed_for_TVD_symmetry(host_sosed2, host_sosed3, host_sosed22, host_sosed23, host_sosed24, host_sosed32, host_sosed33, host_sosed34);
         cout << "Generiruem TVD massivi - end" << endl;
     }
+
+    cout << "Uspex" << endl;
 
     // «аполнение массивов
     int c = 0;
@@ -6579,7 +7339,10 @@ cudaError_t addWithCuda()
 
 
     // 65000 - 10 минут дл€ HLLC + TVD
-    for (int i = 0; i < 120000 * 3; i = i + 2)  // —колько шагов по времени делаем?
+
+    // 19000 - это час дл€ HLLC + TVD с т€жЄлой сеткой на Nuclon
+    // 13900 - это час дл€ HLLC + TVD с т€жЄлой сеткой на HSE
+    for (int i = 0; i < 13900 * 8; i = i + 2)  // —колько шагов по времени делаем?
     {
 
         if (i % 10000 == 0)
@@ -6593,6 +7356,9 @@ cudaError_t addWithCuda()
         //    dev_ro1, dev_ro2, dev_Q1, dev_Q2, dev_p1, dev_p2, dev_u1, dev_u2, dev_v1, dev_v2,//
         //    dev_w1, dev_w2, dev_bx1, dev_by1, dev_bz1, dev_bx2, dev_by2, dev_bz2,//
         //    dev_sosed, dev_sosed2, dev_sosed3, dev_l, dev_r, dev_T, dev_T_do, i, MMM, true, true, 2);
+
+        //Cuda_main_HLLDQ_TVD3 
+        //Cuda_main_HLLDQ_TVD3_symmetry
         Cuda_main_HLLDQ_TVD3 << <(int)(N / 256) + 1, 256 >> > (dev_N, dev_x, dev_y, dev_z, dev_dx, dev_dy, dev_dz,//
             dev_ro1, dev_ro2, dev_Q1, dev_Q2, dev_p1, dev_p2, dev_u1, dev_u2, dev_v1, dev_v2,//
             dev_w1, dev_w2, dev_bx1, dev_by1, dev_bz1, dev_bx2, dev_by2, dev_bz2,//
@@ -6615,6 +7381,8 @@ cudaError_t addWithCuda()
         //    dev_ro2, dev_ro1, dev_Q2, dev_Q1, dev_p2, dev_p1, dev_u2, dev_u1, dev_v2, dev_v1,//
         //    dev_w2, dev_w1, dev_bx2, dev_by2, dev_bz2, dev_bx1, dev_by1, dev_bz1,//
         //    dev_sosed, dev_sosed2, dev_sosed3, dev_l, dev_r, dev_T, dev_T_do, i, MMM, true, true, 2);
+        //Cuda_main_HLLDQ_TVD3 
+        //Cuda_main_HLLDQ_TVD3_symmetry
         Cuda_main_HLLDQ_TVD3 << <(int)(N / 256) + 1, 256 >> > (dev_N, dev_x, dev_y, dev_z, dev_dx, dev_dy, dev_dz,//
             dev_ro2, dev_ro1, dev_Q2, dev_Q1, dev_p2, dev_p1, dev_u2, dev_u1, dev_v2, dev_v1,//
             dev_w2, dev_w1, dev_bx2, dev_by2, dev_bz2, dev_bx1, dev_by1, dev_bz1,//
@@ -6649,7 +7417,7 @@ cudaError_t addWithCuda()
             fout_fur << *host_TT << " " << host_ro1[My_n1] << " " << i << endl;
         }
 
-        if ((i % 50000000 == 0 && i >= 0) || (i % 50000000 == 0 && i >= 7))
+        if ((i % 50000000 == 0 && i > 0) || (i % 50000000 == 0 && i > 7))
         {
             cout << "HLLD + TVD " + nam << endl;
             if (true)

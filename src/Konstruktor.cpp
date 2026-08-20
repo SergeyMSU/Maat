@@ -929,6 +929,11 @@ void Konstruktor::Generate_sosed_for_TVD(int* s1, int* s2, int* s12, int* s13, i
 	double n1, n2, n3, v1, v2, v3, d, m, sk;
 	int ni, nn;
 
+	for (auto& i : this->all_Kyb)
+	{
+		i->drob = true;
+	}
+
 	// Надо определить нужно ли вообще в этой ячейке делать ТВД процедуру
 	for (auto& i : this->all_Kyb)
 	{
@@ -1162,6 +1167,365 @@ void Konstruktor::Generate_sosed_for_TVD(int* s1, int* s2, int* s12, int* s13, i
 
 	cout << "TVD vvedeno dly " << number << " graney" << endl;
 }
+
+void Konstruktor::Generate_sosed_for_TVD_symmetry(int* s1, int* s2, int* s12, int* s13, int* s14, int* s22, int* s23, int* s24)
+{
+	// Версия функции в случае симметричной оси Z
+	int km = -1;
+	double n1, n2, n3, v1, v2, v3, d, m, sk;
+	int ni, nn;
+
+	for (auto& i : this->all_Kyb)
+	{
+		i->drob = true;
+	}
+
+	// Надо определить нужно ли вообще в этой ячейке делать ТВД процедуру
+	for (auto& i : this->all_Kyb)
+	{
+		i->drob = true;
+
+		if (sqrt(kvv(i->x, i->y, i->z)) < 0.9 * ddist)
+		{
+			i->drob = false;
+			break;
+		}
+
+		for (auto& j : i->sosed)
+		{
+			if (j->number < 0 && j->number != -6)// || fabs(i->dx - j->dx) > 0.001)
+			{
+				i->drob = false;
+				break;
+			}
+		}
+
+
+	}
+
+	cout << "A1" << endl;
+	for (auto& i : this->all_Kyb)
+	{
+		if (i->drob == true)
+		{
+			for (auto& j : i->sosed)
+			{
+				if (sqrt(kvv(j->x, j->y, j->z)) < 0.9 * ddist)
+				{
+					i->drob = false;
+					break;
+				}
+
+				for (auto& k : j->sosed)
+				{
+					if (k->number < 0 && k->number != -6)// || fabs(j->dx - k->dx) > 0.001)
+					{
+						i->drob = false;
+						break;
+					}
+				}
+				if (i->drob == false)
+				{
+					break;
+				}
+			}
+		}
+	}
+
+
+	if (false)
+	{
+		for (auto& i : this->all_Kyb)
+		{
+
+			bool br = false;
+			for (auto& j : i->sosed)
+			{
+				if (j->number < 0)
+				{
+					br = true;
+					break;
+				}
+			}
+			if (br == true) continue;
+
+
+			for (auto& j : i->sosed)
+			{
+				if (j->number < 0) continue;
+				for (auto& k : j->sosed)
+				{
+					if (k->number == -6 && i->drob == true && sqrt(kv(i->x / ae1) + kv(i->y / ae1)) > 100.0)
+					{
+						cout << "TUT " << i->drob << " " << i->x / ae1 << " " << i->y / ae1 << " " << i->z / ae1 << endl;
+					}
+				}
+			}
+		}
+	}
+
+
+	//exit(-1);
+
+	cout << "A2" << endl;
+	// Определили, теперь занимаемся добавлением соседей
+	int number = 0;
+	for (auto& i : this->all_Kyb)
+	{
+		for (auto& j : i->sosed)
+		{
+			int aaa[4];
+			aaa[0] = -1; aaa[1] = -1; aaa[2] = -1; aaa[3] = -1;
+			int n_sosed = 0;
+			km++;
+			if (i->drob == false || i->number < 0)
+			{
+				s1[km] = -1;
+				s2[km] = -1;
+				s12[km] = s13[km] = s14[km] = -1;
+				s22[km] = s23[km] = s24[km] = -1;
+				continue;
+			}
+
+			number++;
+
+			double jx, jy, jz;
+			jx = j->x;
+			jy = j->y;
+			jz = j->z;
+			if (j->number == -6)
+			{
+				jx = i->x;
+				jy = i->y;
+				jz = -i->z;
+			}
+
+			n1 = i->x - jx;
+			n2 = i->y - jy;
+			n3 = i->z - jz;
+			d = sqrt(kv(n1) + kv(n2) + kv(n3));
+			n1 = n1 / d;
+			n2 = n2 / d;
+			n3 = n3 / d;
+			ni = -1;
+			nn = -1;
+			m = 2.0;
+			for (auto& k : i->sosed)
+			{
+
+				//if (k->number == -6)
+				//{
+				//	cout << k->x << " " << k->y << " " << k->z << endl;
+				//	exit(-1);
+				//}
+
+				ni++;
+				if (k->number != j->number)
+				{
+					double kx, ky, kz;
+					kx = k->x;
+					ky = k->y;
+					kz = k->z;
+					if (k->number == -6)
+					{
+						kx = i->x;
+						ky = i->y;
+						kz = -i->z;
+					}
+
+
+					v1 = i->x - kx;
+					v2 = i->y - ky;
+					v3 = i->z - kz;
+					d = sqrt(kv(v1) + kv(v2) + kv(v3));
+					v1 = v1 / d;
+					v2 = v2 / d;
+					v3 = v3 / d;
+					sk = skk(n1, n2, n3, v1, v2, v3);
+					if (sk <= m + 0.000000001)
+					{
+						if (sk < m - 0.000000001)
+						{
+							n_sosed = 0;
+						}
+						if (n_sosed <= 3) aaa[n_sosed] = ni;
+						m = sk;
+						nn = ni;
+						n_sosed++;
+					}
+				}
+			}
+
+			if (nn == -1)
+			{
+				cout << "error  bhgvshgvc2344343" << endl;
+			}
+			s1[km] = i->sosed[nn]->number;
+			s12[km] = s13[km] = s14[km] = -1;
+			if (n_sosed == 4)
+			{
+				s12[km] = i->sosed[aaa[1]]->number;
+				s13[km] = i->sosed[aaa[2]]->number;
+				s14[km] = i->sosed[aaa[3]]->number;
+			}
+
+
+			if (n_sosed != 1 && n_sosed != 4)
+			{
+				//cout << "n_sosed = " << n_sosed << endl;
+				cout << "error  t45ty435y546ygrtg45y4t54   " << n_sosed << endl;
+
+				for (auto& k : i->sosed)
+				{
+					if (k->number != j->number)
+					{
+						v1 = i->x - k->x;
+						v2 = i->y - k->y;
+						v3 = i->z - k->z;
+						d = sqrt(kv(v1) + kv(v2) + kv(v3));
+						v1 = v1 / d;
+						v2 = v2 / d;
+						v3 = v3 / d;
+						sk = skk(n1, n2, n3, v1, v2, v3);
+						//cout << k->number << " " << sk << endl;
+						cout << k->x << " " << k->y << " " << k->z << " " << 1 << endl;
+					}
+				}
+				cout << j->x << " " << j->y << " " << j->z << " " << 0 << endl;
+
+				exit(-1);
+			}
+
+		}
+	}
+
+	cout << "A3" << endl;
+
+	km = -1;
+	for (auto& i : this->all_Kyb)
+	{
+		for (auto& j : i->sosed)
+		{
+			int aaa[4];
+			aaa[0] = -1; aaa[1] = -1; aaa[2] = -1; aaa[3] = -1;
+			int n_sosed = 0;
+			km++;
+			if (i->drob == false || i->number < 0)
+			{
+				s1[km] = -1;
+				s2[km] = -1;
+				s12[km] = s13[km] = s14[km] = -1;
+				s22[km] = s23[km] = s24[km] = -1;
+				continue;
+			}
+
+			if (j->number < 0)
+			{
+				s1[km] = -1;
+				s2[km] = -1;
+				s12[km] = s13[km] = s14[km] = -1;
+				s22[km] = s23[km] = s24[km] = -1;
+				continue;
+			}
+			
+
+			double jx, jy, jz;
+			jx = j->x;
+			jy = j->y;
+			jz = j->z;
+			if (j->number == -6)
+			{
+				jx = i->x;
+				jy = i->y;
+				jz = -i->z;
+			}
+
+			n1 = jx - i->x;
+			n2 = jy - i->y;
+			n3 = jz - i->z;
+			d = sqrt(kv(n1) + kv(n2) + kv(n3));
+			n1 = n1 / d;
+			n2 = n2 / d;
+			n3 = n3 / d;
+			ni = -1;
+			nn = -1;
+			m = 2.0;
+			for (auto& k : j->sosed)
+			{
+				ni++;
+				if (k->number != i->number)
+				{
+					double kx, ky, kz;
+					kx = k->x;
+					ky = k->y;
+					kz = k->z;
+					if (k->number == -6)
+					{
+						kx = j->x;
+						ky = j->y;
+						kz = -j->z;
+					}
+					v1 = j->x - kx;
+					v2 = j->y - ky;
+					v3 = j->z - kz;
+					d = sqrt(kv(v1) + kv(v2) + kv(v3));
+					v1 = v1 / d;
+					v2 = v2 / d;
+					v3 = v3 / d;
+					sk = skk(n1, n2, n3, v1, v2, v3);
+
+					//if (k->number == -6 && abs(n3) > 0.9)
+					//{
+					//	cout << "-6: sk = " << sk << " " << m << endl;
+					//	cout << n1 << " " << n2 << " " << n3 << endl;
+					//	cout << v1 << " " << v2 << " " << v3 << endl;
+					//}
+
+					if (sk <= m + 0.000000001)
+					{
+						if (sk < m - 0.000000001)
+						{
+							n_sosed = 0;
+						}
+						if (n_sosed <= 3) aaa[n_sosed] = ni;
+						m = sk;
+						nn = ni;
+						n_sosed++;
+					}
+				}
+			}
+			if (nn == -1)
+			{
+				cout << "error  bhgvshgvc2344343" << endl;
+			}
+			s2[km] = j->sosed[nn]->number;
+			//if (s2[km] == -6)
+			//{
+			//	cout << "s2[km] == -6" << endl;
+			//}
+			s22[km] = s23[km] = s24[km] = -1;
+			if (n_sosed == 4)
+			{
+				//cout << "B1 " << aaa[1] << " " << aaa[2] << " " << aaa[3] << " from: " << j->sosed.size() << endl;
+				s22[km] = j->sosed[aaa[1]]->number;
+				s23[km] = j->sosed[aaa[2]]->number;
+				s24[km] = j->sosed[aaa[3]]->number;
+				//cout << "B2" << endl;
+			}
+
+			if (n_sosed != 1 && n_sosed != 4)
+			{
+				//cout << "n_sosed = " << n_sosed << endl;
+				cout << "error  67y45ty4tgreyh4e5t43t   " << n_sosed << endl;
+			}
+		}
+	}
+
+	cout << "TVD vvedeno dly " << number << " graney" << endl;
+}
+
+
+
 
 double Konstruktor::polar_angle(double x, double y)
 {

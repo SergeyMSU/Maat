@@ -100,6 +100,7 @@ public:
 	void konect(double R);
 
 	void Generate_sosed_for_TVD(int* s1, int* s2, int* s12, int* s13, int* s14, int* s22, int* s23, int* s24);
+	void Generate_sosed_for_TVD_symmetry(int* s1, int* s2, int* s12, int* s13, int* s14, int* s22, int* s23, int* s24);
 
 	void find_sosed(Kyb* A);
 
