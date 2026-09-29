@@ -6155,6 +6155,9 @@ cudaError_t addWithCuda()
 
     Konstruktor K("binary_Maat-HLLC-TVD-atoms-2.dat", true);
 
+    K.print_3D("For_Marc");
+    return cudaStatus;
+
     //cout << "(1) All size = " << K.all_Kyb.size() << endl;
     //K.Drobim(-500.0 * ae1, 450.0 * ae1, -500.0 * ae1, 500.0 * ae1, -500.0 * ae1, 500.0 * ae1, 2);
     //cout << "(2) All size = " << K.all_Kyb.size() << endl;

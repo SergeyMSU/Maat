@@ -2219,9 +2219,9 @@ void Konstruktor::print_3D(string nam)
 {
 	ofstream fout;
 	string name_f = nam + "__3D.txt";
-	double r_o = 1.0; // 0.25320769;
+
 	fout.open(name_f);
-	fout << "TITLE = \"HP\"  VARIABLES = \"X\", \"Y\", \"Z\", \"Ro\", \"Vx\",\"Vy\",\"Vz\",\"Bx\",\"By\",\"Bz\", \"Q\", ZONE T = \"HP\"" << endl;
+	fout << "TITLE = \"HP\"  VARIABLES = \"X\", \"Y\", \"Z\", \"Ro\", \"Vx\",\"Vy\",\"Vz\",\"Bx\",\"By\",\"Bz\", ZONE T = \"HP\"" << endl;
 	//srand(123);
 	for (auto& i : this->all_Kyb)
 	{
@@ -2229,8 +2229,9 @@ void Konstruktor::print_3D(string nam)
 		double rz = sqrt(kv(i->x) + kv(i->y));
 		if (r > 0.6 && rz < 2.0)
 		{
-			fout << i->x * r_o << " " << i->y * r_o << " " << i->z * r_o << " " << i->ro << " " << i->u << " " << i->v << " " << i->w << " " <<
-				i->Bx << " " << i->By << " " << i->Bz << " " << i->Q << endl;
+			fout << i->x / ae1 << " " << i->y / ae1 << " " << i->z / ae1 << " " << i->ro * 0.06 << " " 
+				<< i->u * 13.3897 << " " << i->v * 13.3897 << " " << i->w * 13.3897 << " " 
+				<< i->Bx * 0.424175 << " " << i->By * 0.424175 << " " << i->Bz * 0.424175 << endl;
 		}
 	}
 }
